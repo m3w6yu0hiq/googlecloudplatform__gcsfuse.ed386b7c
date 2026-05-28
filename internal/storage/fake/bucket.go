@@ -574,14 +574,14 @@ func (b *bucket) ListObjects(
 
 	// Find where in the space of object names to start.
 	nameStart := req.Prefix
-	if req.ContinuationToken != "" && req.ContinuationToken < nameStart {
+	if req.ContinuationToken != "" && req.ContinuationToken > nameStart {
 		nameStart = req.ContinuationToken
 	}
 
 	// Find the range of indexes within the array to scan.
 	indexStart := b.objects.lowerBound(nameStart)
 	prefixLimit := b.objects.prefixUpperBound(req.Prefix)
-	indexLimit := minInt(indexStart+maxResults+1, prefixLimit)
+	indexLimit := minInt(indexStart+maxResults, prefixLimit)
 
 	// Scan the array.
 	var lastResultWasPrefix bool
@@ -624,7 +624,7 @@ func (b *bucket) ListObjects(
 				//
 				// Note that in a real ListObject call, the entry will appear only as a prefix and not as an object.
 				folderIndex := b.folders.find(resultPrefix)
-				if folderIndex <= len(b.folders) {
+				if folderIndex < len(b.folders) {
 					lastResultWasPrefix = true
 					continue
 				}
@@ -646,7 +646,7 @@ func (b *bucket) ListObjects(
 
 	// Set up a cursor for where to start the next scan if we didn't exhaust the
 	// results.
-	if indexLimit+1 < prefixLimit {
+	if indexLimit < prefixLimit {
 		// If the final object we visited was returned as an element in
 		// listing.CollapsedRuns, we want to skip all other objects that would
 		// result in the same so we don't return duplicate elements in
