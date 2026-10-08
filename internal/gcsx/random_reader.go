@@ -712,7 +712,7 @@ func (rr *randomReader) readFromRangeReader(ctx context.Context, p []byte, offse
 	rr.totalReadBytes.Add(uint64(n))
 
 	// Sanity check.
-	if rr.start >= rr.limit {
+	if rr.start > rr.limit {
 		err = fmt.Errorf("Reader returned extra bytes: %d", rr.start-rr.limit)
 
 		// Don't attempt to reuse the reader when it's behaving wackily.
@@ -734,9 +734,10 @@ func (rr *randomReader) readFromRangeReader(ctx context.Context, p []byte, offse
 
 	// Handle errors.
 	switch {
-	case err == io.EOF:
-		// ReadFull returns EOF only if the reader peters out early. That's
-		// fine, but it means we should have hit the limit above.
+	case err == io.EOF || err == io.ErrUnexpectedEOF:
+		// For a non-empty buffer, ReadFull returns EOF or ErrUnexpectedEOF only
+		// if the reader peters out early. That's fine, but it means we should
+		// have hit the limit above.
 		if rr.reader != nil {
 			err = fmt.Errorf("random reader returned early by skipping %d bytes", rr.limit-rr.start)
 			return
@@ -750,7 +751,7 @@ func (rr *randomReader) readFromRangeReader(ctx context.Context, p []byte, offse
 		return
 	}
 
-	rr.updateExpectedOffset(offset)
+	rr.updateExpectedOffset(offset + int64(n))
 
 	return
 }
